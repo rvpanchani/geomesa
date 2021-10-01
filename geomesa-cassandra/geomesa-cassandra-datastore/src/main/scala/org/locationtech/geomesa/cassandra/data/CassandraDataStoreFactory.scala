@@ -10,9 +10,8 @@
 package org.locationtech.geomesa.cassandra.data
 
 import java.awt.RenderingHints
-import java.io.Serializable
+import java.io.{File, FileInputStream, InputStream, Serializable}
 import java.util
-
 import com.datastax.driver.core._
 import com.datastax.driver.core.policies.{DCAwareRoundRobinPolicy, DefaultRetryPolicy, TokenAwarePolicy}
 import org.geotools.data.DataAccessFactory.Param
@@ -22,6 +21,8 @@ import org.locationtech.geomesa.index.geotools.GeoMesaDataStoreFactory.{DataStor
 import org.locationtech.geomesa.utils.audit.{AuditLogger, AuditProvider, AuditWriter, NoOpAuditProvider}
 import org.locationtech.geomesa.utils.geotools.GeoMesaParam
 
+import java.security.{KeyStore, SecureRandom}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import scala.util.control.NonFatal
 
 class CassandraDataStoreFactory extends DataStoreFactorySpi {
@@ -58,6 +59,7 @@ class CassandraDataStoreFactory extends DataStoreFactorySpi {
         .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.ONE))
         .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
         .withLoadBalancingPolicy(new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build()))
+        .withSSL(getSSLOptions())
 
     val socketOptions = {
       var options: SocketOptions = null
@@ -111,6 +113,29 @@ class CassandraDataStoreFactory extends DataStoreFactorySpi {
     CassandraDataStoreFactory.canProcess(params)
 
   override def getImplementationHints: java.util.Map[RenderingHints.Key, _] = null
+
+  def getSSLOptions(): SSLOptions = {
+    var sslKeyStorePassword = "changeit"
+    val keyStore: KeyStore = KeyStore.getInstance ("JKS")
+    try{
+      val is: InputStream = new FileInputStream ("C:\\jdk-11\\lib\\security\\cacerts")
+      try keyStore.load (is, sslKeyStorePassword.toCharArray)
+      finally {
+        if (is != null) is.close ()
+      }
+    }
+
+    val kmf: KeyManagerFactory = KeyManagerFactory.getInstance (KeyManagerFactory.getDefaultAlgorithm)
+    kmf.init (keyStore, sslKeyStorePassword.toCharArray)
+    val tmf: TrustManagerFactory = TrustManagerFactory.getInstance (TrustManagerFactory.getDefaultAlgorithm)
+    tmf.init (keyStore)
+
+    // Creates a socket factory for HttpsURLConnection using JKS contents.
+    val sc: SSLContext = SSLContext.getInstance ("TLSv1.2")
+    sc.init (kmf.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
+
+    RemoteEndpointAwareJdkSSLOptions.builder.withSSLContext (sc).build
+  }
 }
 
 object CassandraDataStoreFactory extends GeoMesaDataStoreInfo {
@@ -190,6 +215,7 @@ object CassandraDataStoreFactory extends GeoMesaDataStoreInfo {
         password = true,
         deprecatedKeys = Seq("geomesa.cassandra.password"),
         supportsNiFiExpressions = true)
+
   }
 
   case class CassandraDataStoreConfig(

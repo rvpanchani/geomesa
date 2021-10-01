@@ -101,8 +101,9 @@
         <hbase-1.version>1.4.12</hbase-1.version>
         <hbase.guava.version>11.0.2</hbase.guava.version>
         <protobuf.version>2.5.0</protobuf.version>
-        <cassandra.version>3.0.0</cassandra.version>
-        <cassandra.guava.version>18.0</cassandra.guava.version>
+        <cassandra.version>3.3.0</cassandra.version>
+        <cassandra.additional.version>3.1.4</cassandra.additional.version>
+        <cassandra.guava.version>19.0</cassandra.guava.version>
         <kafka.version>2.1.1</kafka.version> <!-- also supports: 2.0.0, 1.1.1, 1.0.2, 0.10.2.1, 0.9.0.1 -->
         <zkclient.version>0.10</zkclient.version> <!-- corresponding versions: 0.10, 0.10, 0.10, 0.7 -->
         <kafka.jopt.version>5.0.4</kafka.jopt.version> <!-- corresponding versions: 5.0.4, 5.0.4, 4.9, 3.2 -->
@@ -2142,7 +2143,13 @@
             <dependency>
                 <groupId>com.datastax.cassandra</groupId>
                 <artifactId>cassandra-driver-mapping</artifactId>
-                <version>${cassandra.version}</version>
+                <version>${cassandra.additional.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.datastax.cassandra</groupId>
+                <artifactId>cassandra-driver-extras</artifactId>
+                <version>${cassandra.additional.version}</version>
                 <scope>provided</scope>
             </dependency>
             <!-- needs to be provided due to license issues -->

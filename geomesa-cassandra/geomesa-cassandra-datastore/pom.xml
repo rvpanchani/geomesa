@@ -42,7 +42,7 @@
         </dependency>
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
-            <artifactId>cassandra-driver-mapping</artifactId>
+            <artifactId>cassandra-driver-extras</artifactId>
         </dependency>
         <dependency>
             <groupId>org.geotools</groupId>
